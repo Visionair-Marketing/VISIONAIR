@@ -1,0 +1,62 @@
+/*
+ * HorizontalScrollSection — layout configuration
+ *
+ * Tune scroll behaviour here without touching component logic:
+ *   --section-height  : total vertical scroll space the section consumes
+ *                       Formula: (numPanels + 1) × 100vh
+ *                       3 panels → 400vh, 2 panels → 300vh (default)
+ */
+
+.root {
+  position: relative;
+  /*
+   * 560vh total scroll space.
+   * With the updated breakpoints in HorizontalScrollSection.tsx:
+   *   Early movement : 0.20 × 560vh ≈ 112vh
+   *   Core movement  : 0.30 × 560vh ≈ 168vh
+   *   Late movement  : 0.30 × 560vh ≈ 168vh
+   *   End buffer     : 0.20 × 560vh ≈ 112vh  ← breathing room after last step
+   *
+   * Raise this value to add more overall scroll time across all phases.
+   */
+  height: 560vh;
+}
+
+/*
+ * The sticky viewport — always occupies exactly one screen while
+ * the outer .root scrolls behind it.
+ *
+ * Uses width: 100% (NOT 100vw) so it is immune to scrollbar-width
+ * differences across OSes and browsers.
+ */
+.stickyView {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/*
+ * The horizontal track — a flex row containing all panels.
+ * translateX is applied via a Framer Motion MotionValue so only
+ * the transform changes at runtime (no layout recalculation).
+ */
+.track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+/*
+ * Individual full-screen panel.
+ * width: 100vw is safe here because .stickyView clips all overflow,
+ * so no horizontal scrollbar is ever triggered.
+ */
+.panel {
+  width: 100vw;
+  height: 100vh;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
