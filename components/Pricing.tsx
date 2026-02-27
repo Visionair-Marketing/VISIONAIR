@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
+import { useRef } from "react";
 
 const tiers = [
   {
@@ -46,6 +47,74 @@ const tiers = [
   },
 ];
 
+const TILT = 14;
+const LIFT = 1.04;
+
+function TiltCard({ children, className }: { children: React.ReactNode; className: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+
+  const springConfig = { stiffness: 220, damping: 22, mass: 0.6 };
+  const rotateY = useSpring(rawX, springConfig);
+  const rotateX = useSpring(rawY, springConfig);
+  const scale = useSpring(1, { stiffness: 260, damping: 24 });
+  const glareX = useTransform(rawX, [-TILT, TILT], ["0%", "100%"]);
+  const glareY = useTransform(rawY, [-TILT, TILT], ["100%", "0%"]);
+  const glareOpacity = useSpring(0, { stiffness: 260, damping: 24 });
+
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (!el) return;
+    const { left, top, width, height } = el.getBoundingClientRect();
+    const px = (e.clientX - left) / width - 0.5;
+    const py = (e.clientY - top) / height - 0.5;
+    rawX.set(px * TILT * 2);
+    rawY.set(-py * TILT * 2);
+    scale.set(LIFT);
+    glareOpacity.set(0.12);
+  }
+
+  function onMouseLeave() {
+    rawX.set(0);
+    rawY.set(0);
+    scale.set(1);
+    glareOpacity.set(0);
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+        scale,
+        transformPerspective: 900,
+        transformStyle: "preserve-3d",
+      }}
+      className={className}
+    >
+      {/* Glare overlay */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-3xl"
+        style={{
+          opacity: glareOpacity,
+          background: useTransform(
+            [glareX, glareY],
+            ([x, y]) =>
+              `radial-gradient(circle at ${x} ${y}, rgba(255,255,255,0.55) 0%, transparent 70%)`,
+          ),
+        }}
+      />
+      {children}
+    </motion.div>
+  );
+}
+
 const containerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.12 } },
@@ -53,7 +122,7 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 0.61, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 0.61, 0.36, 1] as const } },
 };
 
 export function Pricing() {
@@ -91,15 +160,14 @@ export function Pricing() {
           className="grid gap-6 md:grid-cols-2"
         >
           {tiers.map((tier) => (
-            <motion.div
-              key={tier.name}
-              variants={cardVariants}
-              className={`relative flex flex-col overflow-hidden rounded-3xl border px-8 py-10 sm:px-10 sm:py-12 ${
-                tier.highlighted
-                  ? "border-accent/60 bg-gradient-to-b from-accent/14 via-slate-950 to-black shadow-[0_0_80px_rgba(124,58,237,0.22)]"
-                  : "border-border-subtle/60 bg-gradient-to-b from-slate-900/70 to-black/90"
-              }`}
-            >
+            <motion.div key={tier.name} variants={cardVariants}>
+              <TiltCard
+                className={`relative flex flex-col overflow-hidden rounded-3xl border px-8 py-10 sm:px-10 sm:py-12 ${
+                  tier.highlighted
+                    ? "border-accent/60 bg-gradient-to-b from-accent/14 via-slate-950 to-black shadow-[0_0_80px_rgba(124,58,237,0.22)]"
+                    : "border-border-subtle/60 bg-gradient-to-b from-slate-900/70 to-black/90"
+                }`}
+              >
               {tier.highlighted && (
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
               )}
@@ -148,6 +216,7 @@ export function Pricing() {
               >
                 {tier.cta}
               </Link>
+            </TiltCard>
             </motion.div>
           ))}
         </motion.div>
