@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { basePath } from "@/lib/base-path";
 
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy-policy" },
@@ -21,7 +22,7 @@ export function Footer() {
         >
           <Link href="/" className="inline-flex items-center opacity-90 transition-opacity hover:opacity-100">
             <Image
-              src="/logo/wordmark.png"
+              src={`${basePath}/logo/wordmark.png`}
               alt="Visionair"
               width={2630}
               height={356}

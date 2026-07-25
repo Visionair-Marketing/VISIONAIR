@@ -1,9 +1,5 @@
 import type { NextConfig } from "next";
-
-// Only apply the GitHub Pages project-page subpath during the Pages build
-// (set by .github/workflows/deploy.yml). Leave it empty everywhere else so
-// local dev and any other host (e.g. Vercel) keep serving from root.
-const basePath = process.env.GITHUB_PAGES === "true" ? "/VISIONAIR" : "";
+import { basePath } from "./lib/base-path";
 
 const nextConfig: NextConfig = {
   output: "export",
