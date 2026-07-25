@@ -2,131 +2,208 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { CTAButton } from "@/components/ui/cta-button";
+import { cn } from "@/lib/utils";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+type Status = "idle" | "submitting" | "success" | "error";
+
+interface FormValues {
+  name: string;
+  email: string;
+  company: string;
+  project: string;
+}
+
+type FieldErrors = Partial<Record<keyof FormValues, string>>;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(values: FormValues): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!values.name.trim()) errors.name = "Please enter your name.";
+  if (!values.email.trim()) errors.email = "Please enter your email.";
+  else if (!EMAIL_RE.test(values.email.trim())) errors.email = "Enter a valid email address.";
+  if (!values.project.trim()) errors.project = "Tell us a little about your project.";
+  return errors;
+}
 
 export function Contact() {
-  const [submitted, setSubmitted] = useState(false);
+  const [values, setValues] = useState<FormValues>({
+    name: "",
+    email: "",
+    company: "",
+    project: "",
+  });
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [status, setStatus] = useState<Status>("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const update = (field: keyof FormValues) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setValues((prev) => ({ ...prev, [field]: e.target.value }));
+    // Clear a field's error as soon as the user edits it.
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    const nextErrors = validate(values);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setStatus("submitting");
+    try {
+      // TODO: wire up a real endpoint before launch. The server-side handler
+      // must validate input, rate-limit submissions, and must not log PII
+      // (name/email). This client currently simulates a successful send.
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setStatus("success");
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
-    <section id="contact" className="relative py-32">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+    <section id="contact" className="relative py-28">
+      <div className="mx-auto max-w-2xl px-6 sm:px-8 lg:px-10">
+        <motion.span
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease }}
+          className="mb-12 block text-center text-xs font-semibold uppercase tracking-[0.26em] text-foreground/40"
+        >
+          Let&apos;s talk
+        </motion.span>
 
-      {/* Glow behind the form */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.14),transparent_70%)]" />
-
-      <div className="relative mx-auto max-w-3xl px-6 sm:px-8 lg:px-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-14 space-y-5 text-center"
+          transition={{ duration: 0.9, ease, delay: 0.1 }}
+          className="grid"
         >
-          <span className="inline-flex items-center gap-2 text-[0.7rem] font-medium uppercase tracking-[0.22em] text-accent">
-            <span className="h-px w-6 bg-accent/60" />
-            Get in touch
-            <span className="h-px w-6 bg-accent/60" />
-          </span>
-          <h2 className="text-3xl font-semibold tracking-tight text-slate-50 sm:text-5xl md:text-6xl">
-            Let&apos;s build{" "}
-            <span className="bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
-              something great
-            </span>
-          </h2>
-        </motion.div>
+          {/* Stacked in the same grid cell as the form so the section's
+              height stays fixed at whichever state is taller, instead of
+              reflowing when the success message swaps in. */}
+          <div
+            inert={status !== "success"}
+            aria-hidden={status !== "success"}
+            className={cn(
+              "col-start-1 row-start-1 flex flex-col items-center justify-center gap-3 py-12 text-center transition-opacity duration-700",
+              status === "success" ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+          >
+            <h3 className="text-lg font-medium text-foreground">Message received</h3>
+            <p className="max-w-xs text-body text-muted">
+              Thanks for reaching out. We&apos;ll be in touch within 24 hours.
+            </p>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.65, delay: 0.1 }}
-          className="relative overflow-hidden rounded-2xl border border-border-subtle/60 bg-gradient-to-b from-slate-900/70 to-black/90 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10"
-        >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            inert={status === "success"}
+            aria-hidden={status === "success"}
+            className={cn(
+              "col-start-1 row-start-1 space-y-12 transition-opacity duration-700",
+              status === "success" ? "pointer-events-none opacity-0" : "opacity-100",
+            )}
+          >
+            <div>
+              <label htmlFor="name" className="mb-2 block text-[10px] text-muted">
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="Jane Smith"
+                value={values.name}
+                onChange={update("name")}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? "name-error" : undefined}
+                className="w-full border-0 border-b border-border-subtle bg-transparent pb-2 text-xs text-foreground placeholder:text-muted/50 focus:border-foreground focus:outline-none"
+              />
+              {errors.name && (
+                <p id="name-error" className="mt-1 text-xs text-red-400">
+                  {errors.name}
+                </p>
+              )}
+            </div>
 
-          {submitted ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-4 py-12 text-center"
+            <div>
+              <label htmlFor="email" className="mb-2 block text-[10px] text-muted">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="jane@company.com"
+                value={values.email}
+                onChange={update("email")}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className="w-full border-0 border-b border-border-subtle bg-transparent pb-2 text-xs text-foreground placeholder:text-muted/50 focus:border-foreground focus:outline-none"
+              />
+              {errors.email && (
+                <p id="email-error" className="mt-1 text-xs text-red-400">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="company" className="mb-2 block text-[10px] text-muted">
+                Company (optional)
+              </label>
+              <input
+                id="company"
+                type="text"
+                placeholder="Acme Inc."
+                value={values.company}
+                onChange={update("company")}
+                className="w-full border-0 border-b border-border-subtle bg-transparent pb-2 text-xs text-foreground placeholder:text-muted/50 focus:border-foreground focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="project" className="mb-2 block text-[10px] text-muted">
+                Project
+              </label>
+              <textarea
+                id="project"
+                rows={3}
+                placeholder="What are you building, who's it for, and when do you need it?"
+                value={values.project}
+                onChange={update("project")}
+                aria-invalid={!!errors.project}
+                aria-describedby={errors.project ? "project-error" : undefined}
+                className="w-full resize-none border-0 border-b border-border-subtle bg-transparent pb-2 text-xs text-foreground placeholder:text-muted/50 focus:border-foreground focus:outline-none"
+              />
+              {errors.project && (
+                <p id="project-error" className="mt-1 text-xs text-red-400">
+                  {errors.project}
+                </p>
+              )}
+            </div>
+
+            {status === "error" && (
+              <p className="text-body text-red-400">
+                Something went wrong. Please try again or email us directly.
+              </p>
+            )}
+
+            <CTAButton
+              type="submit"
+              variant="purple"
+              disabled={status === "submitting"}
+              className="w-full"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 text-xl text-accent">
-                ✓
-              </div>
-              <h3 className="text-lg font-semibold text-slate-100">Message received!</h3>
-              <p className="max-w-xs text-sm text-slate-400">
-                Thanks for reaching out. We&apos;ll be in touch within 24 hours.
-              </p>
-            </motion.div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="block text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-500">
-                    Name
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="Jane Smith"
-                    className="w-full rounded-xl border border-border-subtle/50 bg-white/5 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none ring-accent/0 transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-500">
-                    Email
-                  </label>
-                  <input
-                    required
-                    type="email"
-                    placeholder="jane@company.com"
-                    className="w-full rounded-xl border border-border-subtle/50 bg-white/5 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-500">
-                  Company / Project name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Acme Inc."
-                  className="w-full rounded-xl border border-border-subtle/50 bg-white/5 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-500">
-                  Tell us about your project
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="What are you building, who's it for, and when do you need it?"
-                  className="w-full resize-none rounded-xl border border-border-subtle/50 bg-white/5 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-[0_14px_50px_rgba(124,58,237,0.5)] transition hover:bg-accent-soft"
-              >
-                Send message
-                <span aria-hidden className="text-base">
-                  →
-                </span>
-              </button>
-
-              <p className="text-center text-[0.65rem] text-slate-600">
-                No spam. No hard sell. Just a conversation.
-              </p>
-            </form>
-          )}
+              {status === "submitting" ? "Sending…" : "Send"}
+            </CTAButton>
+          </form>
         </motion.div>
       </div>
     </section>

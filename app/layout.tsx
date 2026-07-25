@@ -1,21 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Instrument_Serif } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { LenisProvider } from "@/components/animation/LenisProvider";
+import { Cursor } from "@/components/Cursor";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+// Body + heading face. Geist, self-hosted variable font. Body copy runs light
+// (weight 300, set on <body> in globals.css); headings/labels opt into heavier
+// weights explicitly. Exposes --font-geist-sans, aliased to --font-sans in CSS.
+
+// Display face. Used sparingly: large hero words, pull quotes, editorial accents.
+// Single weight by design (regular + italic) to keep it restrained.
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-serif",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
-  title: "Visionair — Digital-first marketing & web design studio",
+  // Browser tab title. app/icon.png is auto-detected by Next as the favicon,
+  // so no explicit `icons` entry is needed.
+  title: "Visionair Marketing",
   description:
     "Visionair is a digital-first marketing and web design studio crafting high-converting, modern websites for businesses that don't have time to build their own.",
-  icons: {
-    icon: "/favicon.ico",
-  },
   metadataBase:
     typeof process !== "undefined"
       ? new URL(
@@ -38,7 +47,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#05010d",
+  // Mirrors --background. Next metadata can't read CSS vars, so keep in sync.
+  themeColor: "#0a0a0c",
 };
 
 export default function RootLayout({
@@ -49,9 +59,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${spaceGrotesk.variable} bg-background text-foreground antialiased`}
+        className={`${GeistSans.variable} ${instrumentSerif.variable} bg-background text-foreground antialiased`}
       >
-        {children}
+        <LenisProvider>{children}</LenisProvider>
+        <Cursor />
       </body>
     </html>
   );

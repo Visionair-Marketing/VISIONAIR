@@ -1,62 +1,103 @@
 "use client";
 
-import { motion } from "framer-motion";
+import {
+  motion,
+  useMotionValueEvent,
+  useScroll,
+} from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { CTAButton } from "@/components/ui/cta-button";
+import { useAnchorScroll } from "@/hooks/use-anchor-scroll";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Work", href: "#work" },
-  { label: "Approach", href: "#approach" },
-  { label: "About", href: "#about" },
+  { label: "Services", href: "#services" },
+  { label: "How We Work", href: "#how-we-work" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Contact", href: "#contact" },
 ];
 
+const ease = [0.22, 1, 0.36, 1] as const;
+
+// The navbar stays collapsed while the hero owns the viewport and drops down
+// once the user is 75% of the way through it.
+const HERO_SCROLL_THRESHOLD = 0.25;
+
 export function Navbar() {
+  const { handleAnchorClick, handleToTop, prefersReducedMotion } = useAnchorScroll();
+  const { scrollY } = useScroll();
+  const [visible, setVisible] = useState(false);
+
+  const pastHero = (y: number) =>
+    y > window.innerHeight * HERO_SCROLL_THRESHOLD;
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setVisible(pastHero(latest));
+  });
+
+  // Scroll restoration can land the page mid-document before any scroll event.
+  useEffect(() => {
+    setVisible(pastHero(window.scrollY));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
-      className="sticky top-0 z-30 border-b border-border-subtle/60 bg-black/40 backdrop-blur-md"
+      initial={false}
+      animate={{ y: visible ? "0%" : "-110%" }}
+      transition={
+        prefersReducedMotion ? { duration: 0 } : { duration: 0.7, ease }
+      }
+      inert={visible ? undefined : true}
+      className="fixed inset-x-0 top-0 z-30 border-b border-border-subtle bg-background/80 backdrop-blur-md"
     >
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-8 lg:px-10">
-        <Link href="/" className="group inline-flex items-center gap-2">
-          <span className="h-7 w-7 rounded-full bg-accent-soft/40 ring-1 ring-accent/50 transition-all group-hover:bg-accent/80 group-hover:ring-accent" />
-          <span className="text-sm font-semibold tracking-[0.25em] text-slate-200 uppercase">
-            Visionair
-          </span>
+      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6 sm:px-8 lg:px-10">
+        <Link
+          href="/"
+          onClick={handleToTop}
+          aria-label="Visionair — back to top"
+          className="inline-flex items-center opacity-90 transition-opacity hover:opacity-100"
+        >
+          <Image
+            src="/logo/wordmark.png"
+            alt="Visionair"
+            width={2630}
+            height={356}
+            priority
+            className="h-[18px] w-auto"
+          />
         </Link>
 
-        <div className="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "transition-colors hover:text-white",
-                "data-[active=true]:text-white data-[active=true]:underline",
-              )}
-            >
-              {item.label}
+        <div className="hidden items-center gap-9 md:flex">
+          <div className="flex items-center gap-8 text-[13px] tracking-wide text-muted">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleAnchorClick(item.href)}
+                className={cn("transition-colors hover:text-foreground")}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <CTAButton asChild variant="purple" size="sm">
+            <Link href="#contact" onClick={handleAnchorClick("#contact")}>
+              Book a call
             </Link>
-          ))}
-          <Link
-            href="#contact"
-            className="inline-flex items-center gap-2 rounded-full border border-accent/60 bg-accent/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[0_0_40px_rgba(124,58,237,0.35)] transition hover:border-accent hover:bg-accent"
-          >
-            Let&apos;s talk
-          </Link>
+          </CTAButton>
         </div>
 
-        <div className="flex items-center gap-3 md:hidden">
-          <Link
-            href="#contact"
-            className="inline-flex items-center rounded-full border border-accent/70 bg-accent/90 px-4 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_24px_rgba(124,58,237,0.4)] transition hover:border-accent hover:bg-accent"
-          >
-            Let&apos;s talk
-          </Link>
+        <div className="flex items-center md:hidden">
+          <CTAButton asChild variant="purple" size="sm">
+            <Link href="#contact" onClick={handleAnchorClick("#contact")}>
+              Book a call
+            </Link>
+          </CTAButton>
         </div>
       </nav>
     </motion.header>
   );
 }
-

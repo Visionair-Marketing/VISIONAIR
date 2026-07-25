@@ -1,51 +1,145 @@
 @import "tailwindcss";
 
+/*
+  Ground-up rebuild. Flat dark base with a two-tier brand color system: a
+  single flat accent for small decorative elements, and a three-stop brand
+  gradient (indigo, blue, purple, drawn from the Visionaire logo) reserved
+  for CTA fills, spacious filled surfaces, and one animated headline.
+  Corner radius is a consistent 8px on every container, image, and button
+  (see the reset below). Full-bleed structural wrappers stay square so
+  stacked section dividers don't get notched corners. The only fully round
+  shape on the site is the literal parallax "dot" marker, which opts into
+  9999px explicitly via .dot.
+*/
+
 :root {
-  --background: #05010d;
-  --foreground: #f9fafb;
-  --accent: #7c3aed;
-  --accent-soft: #4c1d95;
-  --border-subtle: rgba(148, 163, 184, 0.18);
+  --background: #0a0a0c;
+  --foreground: #e9e9ec;
+  --muted: #86868c;
+  /*
+    Flat accent for small decorative use: focus rings, checkmarks, borders,
+    switch, small text highlights. Brightest brand stop, most legible on the
+    near-black background. Spacious fills use --gradient-brand instead.
+  */
+  --accent: #9961c7;
+  --accent-soft: #7d50a3;
+
+  /*
+    Brand gradient stops, drawn from the Visionaire logo, then muted slightly
+    (darker, less saturated) so gradient fills sit back into the dark UI.
+    The flat --accent stays at the unmuted logo purple on purpose: small
+    decorative elements need the extra brightness to stay legible.
+  */
+  --brand-indigo: #312e60;
+  --brand-blue: #4c5f9e;
+  --brand-purple: #8e5bb9;
+  --gradient-brand: linear-gradient(
+    225deg,
+    var(--brand-indigo) 0%,
+    var(--brand-blue) 50%,
+    var(--brand-purple) 100%
+  );
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.28);
+
+  /*
+    Surfaces. `--surface` is the one opaque elevated section background (a hair
+    lighter than --background). The translucent tints are the elevation/interaction
+    scale for cards, inputs, and hover states, layered over any background.
+  */
+  --surface: #0d0d10;
+  --surface-faint: rgba(255, 255, 255, 0.02);
+  --surface-raised: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-active: rgba(255, 255, 255, 0.12);
+
+  --radius: 8px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-brand-indigo: var(--brand-indigo);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-purple: var(--brand-purple);
+  --background-image-gradient-brand: var(--gradient-brand);
   --color-border-subtle: var(--border-subtle);
-  --font-sans: var(--font-sans);
+  --color-border-strong: var(--border-strong);
+  --color-surface: var(--surface);
+  --color-surface-faint: var(--surface-faint);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  /*
+    Typography system. Two typefaces:
+      font-sans    → Inter. Body, UI, and headings (semibold + tight tracking).
+      font-display → Instrument Serif. Reserved for large editorial moments.
+    Use `font-display` sparingly (hero words, pull quotes, eyebrows), never for
+    body copy. See design-system.md for the scale and usage rules.
+  */
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-serif), Georgia, "Times New Roman", serif;
+  --radius: var(--radius);
+
+  /*
+    Single body-text size token. Every subtitle, paragraph, list item, and UI
+    label routes through the `text-body` utility so the whole site's body copy
+    scales from one place. Sized to the pricing-card feature text (13px / 24px
+    line-height). Headings intentionally do NOT use this — they keep their own
+    scale so titles and body contrast cleanly. Change the value here to reflow
+    all body copy at once.
+  */
+  --text-body: 0.75rem;
+  --text-body--line-height: 1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020015;
-    --foreground: #f9fafb;
+/*
+  These live in @layer base on purpose. Tailwind v4 puts every utility inside a
+  cascade layer, and UNLAYERED css beats layered css regardless of specificity.
+  If this radius reset were unlayered, `rounded-none` (a utility) could never
+  override it, so squared buttons and any `rounded-*` override would silently
+  fail. Keeping the reset in `base` lets the utilities layer win as expected.
+*/
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-radius: var(--radius);
   }
-}
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+  /* Full-bleed structural wrappers stay square. */
+  html,
+  body,
+  main,
+  section,
+  header,
+  footer,
+  nav {
+    border-radius: 0;
+  }
+
+  .dot {
+    border-radius: 9999px;
+  }
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background: radial-gradient(
-    circle at top,
-    rgba(124, 58, 237, 0.25),
-    transparent 55%
-  ),
-  radial-gradient(
-    circle at bottom,
-    rgba(15, 23, 42, 1),
-    #020015 65%
-  );
+  background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont,
+  /*
+    Body copy runs light (300) for a quieter, more premium texture. Headings,
+    labels (.eyebrow), and buttons opt back into firmer weights explicitly at
+    the use site, so only running text inherits the light weight.
+  */
+  font-weight: 300;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont,
     "SF Pro Text", "Segoe UI", sans-serif;
 }
 
@@ -58,16 +152,63 @@ button {
   font: inherit;
 }
 
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+/*
+  Eyebrow / kicker — the small uppercase tracked labels that sit above section
+  headings and in the logo lockup. Shares the button's 0.14em tracking so labels
+  and CTAs read as one system. Pair with a color utility (text-muted / text-accent)
+  and sizing at the use site.
+*/
+.eyebrow {
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
-/* Smooth scroll for anchor links */
-html {
-  scroll-behavior: smooth;
+/*
+  Brand gradient text fill. Static clip only: the "living" drift is driven by
+  GSAP in ScrollReveal.tsx, which also aligns background-size/position across
+  word spans so a split sentence reads as one continuous gradient. Outside of
+  ScrollReveal this renders the plain static gradient at the element's size.
+*/
+.gradient-text-brand {
+  background-image: var(--gradient-brand);
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/*
+  Lenis owns smooth scrolling (see components/animation/LenisProvider.tsx).
+  Do NOT add `html { scroll-behavior: smooth }` here — native smooth scrolling
+  double-smooths and fights Lenis.
+*/
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/*
+  Custom cursor (components/Cursor.tsx). Only applied once the effect confirms
+  a fine pointer and no reduced-motion preference, so we never hide the native
+  cursor without a replacement (touch devices, JS-disabled, SSR fallback).
+*/
+.cursor-none-active,
+.cursor-none-active * {
+  cursor: none;
 }
