@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CTAButton } from "@/components/ui/cta-button";
 import { DarkVeil } from "@/components/animation/DarkVeil";
 import { useAnchorScroll } from "@/hooks/use-anchor-scroll";
-import { basePath } from "@/lib/base-path";
+import { asset } from "@/lib/base-path";
 
 /*
   easeInOutCubic. The old easeOutQuint curve [0.22, 1, 0.36, 1] dumps ~97% of
@@ -115,7 +115,7 @@ export function Hero() {
           className="w-full"
         >
           <Image
-            src={`${basePath}/logo/wordmark.png`}
+            src={asset("/logo/wordmark.png")}
             alt="Visionair"
             width={2630}
             height={356}

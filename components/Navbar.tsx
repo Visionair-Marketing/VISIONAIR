@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { useAnchorScroll } from "@/hooks/use-anchor-scroll";
-import { basePath } from "@/lib/base-path";
+import { asset } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -62,7 +62,7 @@ export function Navbar() {
           className="inline-flex items-center opacity-90 transition-opacity hover:opacity-100"
         >
           <Image
-            src={`${basePath}/logo/wordmark.png`}
+            src={asset("/logo/wordmark.png")}
             alt="Visionair"
             width={2630}
             height={356}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CTAButton } from "@/components/ui/cta-button";
 import { useAnchorScroll } from "@/hooks/use-anchor-scroll";
+import { asset } from "@/lib/base-path";
 import {
   motion,
   AnimatePresence,
@@ -14,7 +15,13 @@ import {
   useReducedMotion,
 } from "framer-motion";
 
-const IMAGE_SRC = "/Luxury-House.avif";
+// One image per service image slot (see IMAGE_COUNT below) — 3 images for
+// 4 titles, in reveal order.
+const IMAGE_SRCS = [
+  asset("/images/Building-B.webp"),
+  asset("/images/Building-C.jpg"),
+  asset("/images/Landscaping.jpg"),
+];
 
 // Service titles. There is intentionally ONE MORE title than there are images:
 // title 0 shows before any image arrives, then each image that sweeps past the
@@ -184,7 +191,13 @@ export function WhatWeDo() {
                 <p className="text-2xl font-medium text-foreground">{item.label}</p>
               </div>
               <div className="relative h-64 w-full overflow-hidden border border-border-subtle">
-                <Image src={IMAGE_SRC} alt="" fill className="object-cover" sizes="600px" />
+                <Image
+                  src={IMAGE_SRCS[Math.min(i, IMAGE_SRCS.length - 1)]}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="600px"
+                />
               </div>
             </div>
           ))}
@@ -228,12 +241,12 @@ export function WhatWeDo() {
           {reduceMotion ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div className="mx-auto flex max-w-lg flex-col gap-10 px-8">
-                {Array.from({ length: IMAGE_COUNT }).map((_, i) => (
+                {IMAGE_SRCS.map((src, i) => (
                   <div
                     key={i}
                     className="relative h-48 w-full overflow-hidden border border-border-subtle"
                   >
-                    <Image src={IMAGE_SRC} alt="" fill className="object-cover" sizes="640px" />
+                    <Image src={src} alt="" fill className="object-cover" sizes="640px" />
                   </div>
                 ))}
               </div>
@@ -244,10 +257,10 @@ export function WhatWeDo() {
               className="absolute inset-x-0 top-0 z-10 mx-auto flex max-w-lg flex-col px-8 will-change-transform"
             >
               <div style={{ height: `${GAP_VH}vh` }} />
-              {Array.from({ length: IMAGE_COUNT }).map((_, i) => (
+              {IMAGE_SRCS.map((src, i) => (
                 <div key={i}>
                   <ParallaxImage
-                    src={IMAGE_SRC}
+                    src={src}
                     index={i}
                     progress={scrollYProgress}
                     onCenterPassed={onCenterPassed}
